@@ -214,6 +214,10 @@ function main() {
 	//addEventListener("keyup", this.keyEvent);
 	addEventListener("scriptmsg",
 		function (msg) {
+			if (typeof msg !== 'string' && !(msg instanceof String)) {
+				return;
+			}
+
 			var args = msg.split(' ');
 			if (args[0] === "playtime") {
 				Playtime.onReceivePlaytime(args[1]);
