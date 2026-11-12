@@ -685,6 +685,11 @@ MainSwitch:
 				ControlAction.click(6, 431, 341, 15, 16);
 			}
 
+			// Make room for the whole team
+			if (HordeSystem.teamSize > 0) {
+				ControlAction.setText(1, 657, 308, 27, 20, Math.min(HordeSystem.teamSize, 8).toString());
+			}
+
 			// Get game name if there is none
 			while (!gameInfo.gameName) {
 				D2Bot.requestGameInfo();
