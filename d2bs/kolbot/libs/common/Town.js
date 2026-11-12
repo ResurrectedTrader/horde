@@ -1874,6 +1874,9 @@ MainLoop:
 						delay(me.ping + 200);
 
 						col = this.checkColumns(beltSize);
+
+						// The potion went to the belt, don't look at its (possibly stale) handle again
+						break;
 					}
 				}
 			}
