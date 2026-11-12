@@ -2788,7 +2788,27 @@ Item.equipMerc = function (item, bodyLoc) {
         return true;
     }
 
-    var i, cursorItem;
+    var i, cursorItem, previousGid, equippedGid,
+        gid = item.gid,
+        classid = item.classid;
+
+    // The game re-issues the item under a new unit id once the merc wears it, so the
+    // handle we were given stops resolving after a successful click. Confirm the equip
+    // from the merc's slot instead: a new gid with the item's classid means it went on.
+    function mercSlotGid() {
+        var merc = me.getMerc(),
+            mercItem = merc && merc.getItem();
+
+        if (mercItem) {
+            do {
+                if (mercItem.location === 1 && mercItem.bodylocation === bodyLoc) {
+                    return mercItem.classid === classid ? mercItem.gid : -1;
+                }
+            } while (mercItem.getNext());
+        }
+
+        return -1;
+    }
 
     if (item.location === 7) {
         if (!Town.openStash()) {
@@ -2796,12 +2816,22 @@ Item.equipMerc = function (item, bodyLoc) {
         }
     }
 
+    previousGid = mercSlotGid();
+
     for (i = 0; i < 3; i += 1) {
+        item = me.getItem(-1, -1, gid) || getUnit(100);
+
+        if (!item || item.type !== 4 || item.gid !== gid) {
+            break;
+        }
+
         if (item.toCursor()) {
             clickItem(4, bodyLoc);
             delay(me.ping * 2 + 500);
 
-            if (item.bodylocation === bodyLoc) {
+            equippedGid = mercSlotGid();
+
+            if (equippedGid !== -1 && equippedGid !== previousGid) {
                 if (getCursorType() === 3) {
                     //Misc.click(0, 0, me);
 
