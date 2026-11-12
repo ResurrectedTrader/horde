@@ -640,6 +640,12 @@ ModeLoop:
 
 							break;
 						case 2: // stairs
+							// moveTo can report success after giving up on its retries short of the destination,
+							// don't go looking for the stairs from there
+							if (getDistance(me, dest[0], dest[1]) > 5) {
+								return false;
+							}
+
 							if (!this.openExit(areas[i]) && !this.useUnit(5, currExit.tileid, areas[i])) {
 								return false;
 							}
