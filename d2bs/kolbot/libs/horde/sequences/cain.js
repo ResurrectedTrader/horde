@@ -92,7 +92,17 @@ function cain(mfRun) { // Dark-f: rewrite rescue cain
 			Attack.clear(40); // treehead
 
 			if (Role.isLeader) {
-				Quest.getQuestItem(524, 30);
+				// Misc.openChest only clicks the tree from one spot next to it, which can be blocked. Without the scroll
+				// the stones open no portal and the whole team fails the sequence, so click the tree as a player would.
+				for (i = 0; i < 3 && !Quest.getQuestItem(524, 30); i += 1) {
+					var tree = getUnit(2, 30);
+
+					if (tree && !tree.mode) {
+						Pather.moveToUnit(tree);
+						Misc.click(0, 0, tree);
+						delay(me.ping * 2 + 500);
+					}
+				}
 			}
 			
 			Pather.moveToPreset(me.area, 1, 738, 0, 0, true, true); //move to tree
@@ -200,6 +210,15 @@ function cain(mfRun) { // Dark-f: rewrite rescue cain
 			Party.secureWaitSynchro("enter_tristram");
 			// all team
 			for (i = 0; i < 5; i += 1) {
+				// The portal is only found from near the stones, get back there if we fell behind
+				if (!Pather.getPortal(38)) {
+					try {
+						Pather.moveToPreset(me.area, 1, 737, 0, 0, true, true);
+					} catch (e) {
+						print(e);
+					}
+				}
+
 				if (Pather.usePortal(38)) {
 					break;
 				}
