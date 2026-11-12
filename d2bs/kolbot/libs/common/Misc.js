@@ -3022,12 +3022,22 @@ Item.autoEquipMerc = function () {
 
                     gid = items[0].gid;
                     classid = items[0].classid;
-					equippedItem = me.getItem(-1, -1, gid);
-					
-					print("Merc equip [" + bodyLoc[j] + "] : " + items[0].name + " - tier " + tier + " | Remove " + equippedItem.name + " - tier " + equippedTier);
-					
+
+					print("Merc equip [" + bodyLoc[j] + "] : " + items[0].name + " - tier " + tier + " | Remove " + this.getEquippedItemMerc(bodyLoc[j]).name + " - tier " + equippedTier);
+
 					if (this.equipMerc(items[0], bodyLoc[j])) {
-						Misc.logItem("Merc Equipped", equippedItem,"Merc Tier: "+tier);
+						// Log the item the merc now wears: the handle we had doesn't resolve once it moved to the merc
+						equippedItem = me.getMerc() && me.getMerc().getItem();
+
+						if (equippedItem) {
+							do {
+								if (equippedItem.location === 1 && equippedItem.bodylocation === bodyLoc[j]) {
+									Misc.logItem("Merc Equipped", equippedItem, "Merc Tier: " + tier);
+
+									break;
+								}
+							} while (equippedItem.getNext());
+						}
 					}
 
 					Misc.cursorCheck();
