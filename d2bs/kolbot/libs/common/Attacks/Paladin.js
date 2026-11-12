@@ -265,6 +265,8 @@ var ClassAttack = {
 			}
 
 			break;
+		default: // The unit is gone (e.g. TownChicken took us to town mid-attack): its type reads undefined.
+			return false;
 		}
 
 		for (i = 0; i < positions.length; i += 1) {
