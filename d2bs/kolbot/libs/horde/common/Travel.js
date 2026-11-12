@@ -561,11 +561,25 @@ var Travel = {
 	},
 
 	walkMeHome: function(clearPath) {
+		var area = me.area, attempts = 0;
+
 		if(me.inTown){
 			return true;
 		}
 		try {
-			while(!me.inTown){
+			// Pather fails right away once we died (no revive while this thread holds the others paused)
+			while(!me.inTown && !me.dead){
+				// Pather can fail right away (exit or stairs not found...): retry a few times, don't spin forever
+				if (me.area !== area) {
+					area = me.area;
+					attempts = 0;
+				} else if (attempts >= 5) {
+					print("walkMeHome: failed to walk to town from " + Pather.getAreaName(me.area));
+					break;
+				}
+
+				attempts += 1;
+
 				switch (me.area) {
 					case 2: 	//blood moor
 						Pather.moveToExit(1, true, clearPath);
@@ -602,6 +616,9 @@ var Travel = {
 						return false; //unhandled
 				}
 
+				if (!me.inTown && me.area === area) {
+					delay(me.ping * 2 + 250);
+				}
 			}
 			Packet.flash(me.gid);
 			delay(me.ping * 2 + 250);
