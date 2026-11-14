@@ -31,8 +31,29 @@ function anya_requirements(mfRun) {
 	return Sequencer.ok;//We can process sequence
 }
 
+// Frozen Anya only stands on her altar while the game's Prison of Ice is still to do: in a game whose first
+// player has the quest done (or done before), she is already free and never shows up here.
+function anya_findFrozen(range, clearPath) {
+	var i, frozen = false, unit = getPresetUnit(me.area, 2, 460);
+
+	if (!unit) {
+		return false;
+	}
+
+	for (i = 0; i < 10; i += 1) {
+		Pather.moveToUnit(unit, 5, 5, clearPath);
+		frozen = getUnit(2, 558);
+		if (frozen && getDistance(me, frozen) < range) {
+			break;
+		}
+		delay(500);
+	}
+
+	return frozen;
+}
+
 function anya(mfRun) { // Dark-f: Rewrite this.
-	var i, anya, malah, scroll, unit, waitAnya;
+	var i, anya, malah, scroll, unit, waitAnya, portalTick;
 
 	Town.goToTown(5);
 	Party.wholeTeamInGame();
@@ -71,34 +92,24 @@ function anya(mfRun) { // Dark-f: Rewrite this.
 				}
 			}
 			if (me.classid ===1 ) {
-				unit = getPresetUnit(me.area, 2, 460);
-				while(true) {
-					Pather.moveToUnit(unit, 5, 5, false);
-					anya = getUnit(2, 558);
-					if ( anya && getDistance(me, anya) < 35)
-						break;
-				}
+				anya_findFrozen(35, false);
 			}
 			Role.makeTeamJoinPortal();
 
 		} else {
 			Town.goToTown(5);
 			Town.move("portalspot");
-			while(!Pather.usePortal(114, null)) {
+			portalTick = getTickCount();
+			while(!Pather.usePortal(114, null) && getTickCount() - portalTick < 3 * 60 * 1000) {
 				delay(1000);
 			}
 		}
-		
-		Attack.clear(40);
-		
-		unit = getPresetUnit(me.area, 2, 460);
-		while(true) {
-			Pather.moveToUnit(unit, 5, 5, true);
-			anya = getUnit(2, 558);
-			if ( anya && getDistance(me, anya) < 10)
-				break;
+
+		if (me.area === 114) {
+			Attack.clear(40);
+			anya = anya_findFrozen(10, true);
 		}
-		
+
 		if (anya) {
 			if (Role.isLeader) {
 				Pather.moveToUnit(anya);
@@ -144,8 +155,7 @@ function anya(mfRun) { // Dark-f: Rewrite this.
 				}
 			}
 		} else {
-			HordeDebug.LogScriptError("Anya", "failed to find anya");
-			return Sequencer.fail;
+			print("anya: no frozen Anya at her altar, she is already free in this game");
 		}
 		
 		Role.backToTown();
@@ -173,6 +183,17 @@ function anya(mfRun) { // Dark-f: Rewrite this.
 		}
 	}
 	Town.goToTown(5);
+	// A reward left pending (the game ended before it was collected): Malah hands over the Scroll of Resistance.
+	if (me.getQuest(37, 1) && !me.getItem(646)) {
+		Town.move(NPC.Malah);
+		malah = getUnit(1, NPC.Malah);
+		for (i = 0; malah && i < 10 && !me.getItem(646) && me.getQuest(37, 1); i += 1) {
+			malah.openMenu();
+			me.cancel();
+			delay(1000);
+			sendPacket(1, 0x40); // Refresh quest status
+		}
+	}
 	scroll = me.getItem(646);
 	if (scroll) {
 		clickItem(1, scroll);
