@@ -448,7 +448,7 @@ BaalLoop:
 			delay(1000);
 		}
 		Pather.moveTo(15134, 5923);
-		var baalded = false;
+		var baalded = false, baalKilled = false;
 		var baalloop = getTickCount() + 3*60*1000;
 		while(!baalded && getTickCount() < baalloop){
 			try{
@@ -463,7 +463,21 @@ BaalLoop:
 		delay(me.ping*2);
 		Pickit.pickItems();
 		delay(2000);
-		if (!quest) {
+		// Attack.kill also succeeds when Baal's handle went stale (a town trip mid-fight), so ask the quest whether he
+		// died: the restart only skips the congrats screen of a kill, and leaving while he lives drops the game for
+		// the whole team.
+		for (questTry = 0; !quest && questTry < 20; questTry += 1) {
+			sendPacket(1, 0x40);
+			delay(250);
+			if (me.getQuest(40, 0)) {
+				baalKilled = true;
+				break;
+			}
+		}
+		if (!quest && !baalKilled) {
+			print("Baal: still alive after the fight, no restart");
+		}
+		if (!quest && baalKilled) {
 			Communication.sendToList(HordeSystem.allTeamProfiles, "avoiding congrats screen");
 
 			delay(20 * me.ping); // Wait 2-4 seconds for others to pause ToolsThread.js before leaving.
